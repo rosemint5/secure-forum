@@ -5,6 +5,7 @@ Secure web app
 Django, ...
 
 ## Uruchomienie
+```bash
 git clone https://github.com/rosemint5/secure-forum/secure-forum-django.git
 
 cd secure-forum
@@ -16,3 +17,4 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 python manage.py runserver
+```
