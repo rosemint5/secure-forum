@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # SecureForum
 Secure web app
 
@@ -17,4 +16,3 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 python manage.py runserver
->>>>>>> ddca27d (Django project structure)
