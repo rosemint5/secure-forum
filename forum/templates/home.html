@@ -1,0 +1,14 @@
+<h2>Forum</h2>
+<p>Welcome, {{ request.user.username }} | <a href="{% url 'logout' %}">Logout</a></p>
+<form method="post">
+  {% csrf_token %}
+  <textarea name="content" rows="3" cols="40"></textarea><br>
+  <button type="submit">Post</button>
+</form>
+
+<hr>
+{% for post in posts %}
+  <p><strong>{{ post.author.username }}</strong>: {{ post.content }} <small>({{ post.created_at }})</small></p>
+{% empty %}
+  <p>No posts yet.</p>
+{% endfor %}
