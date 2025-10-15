@@ -1,0 +1,36 @@
+
+services:
+  db:
+    image: postgres:15
+    container_name: secureforum-db
+    restart: always
+    environment:
+      POSTGRES_DB: secureforum
+      POSTGRES_USER: forumuser
+      POSTGRES_PASSWORD: forumpass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    container_name: secureforum-web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DEBUG=1
+      - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
+      - DATABASE_NAME=secureforum
+      - DATABASE_USER=forumuser
+      - DATABASE_PASSWORD=forumpass
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+
+volumes:
+  postgres_data:
