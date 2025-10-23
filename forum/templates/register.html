@@ -1,8 +1,21 @@
 <h2>Register</h2>
+
+{% if messages %}
+  <ul style="color: red;">
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
 <form method="post">
   {% csrf_token %}
-  <input type="text" name="username" placeholder="Username"><br>
+  <input type="text" name="username" placeholder="Username" value="{{ username|default:'' }}"><br>
   <input type="password" name="password" placeholder="Password"><br>
   <button type="submit">Register</button>
 </form>
-<a href="{% url 'login' %}">Login</a>
+
+<p>
+  Already have an account?
+  <a href="{% url 'login' %}">Login</a>
+</p>
