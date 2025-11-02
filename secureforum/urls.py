@@ -20,7 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path("staff-panel-9c0b3a/", admin.site.urls),
+    path('admin/', admin.site.urls),
     path("", include("forum.urls")),
 ]
 
