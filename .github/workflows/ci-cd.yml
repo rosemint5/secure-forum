@@ -18,14 +18,14 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.BASTION_KEY }}
 
-      - name: Deploy przez bastion na backend
-        run: |
-          ssh -o StrictHostKeyChecking=no ec2-user@13.62.52.95 "\
-            ssh -o StrictHostKeyChecking=no -i 'secure-forum-key.pem' ${{ secrets.BACKEND_USER }}@${{ secrets.BACKEND_HOST }} '\
-              cd /home/ubuntu/secure-forum && \
-              git fetch origin && \
-              git reset --hard origin/bastion-test && \
-              docker-compose down --rmi all -v --remove-orphans && \
-              docker-compose --env-file .env.dev up -d --build \
-            ' \
-          "
+#      - name: Deploy przez bastion na backend
+#        run: |
+#          ssh -o StrictHostKeyChecking=no ec2-user@13.62.52.95 "\
+#            ssh -o StrictHostKeyChecking=no -i 'secure-forum-key.pem' ${{ secrets.BACKEND_USER }}@${{ secrets.BACKEND_HOST }} '\
+#              cd /home/ubuntu/secure-forum && \
+#              git fetch origin && \
+#              git reset --hard origin/bastion-test && \
+#              docker-compose down --rmi all -v --remove-orphans && \
+#              docker-compose --env-file .env.dev up -d --build \
+#            ' \
+#          "
