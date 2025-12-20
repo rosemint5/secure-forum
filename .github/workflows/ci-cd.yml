@@ -26,6 +26,6 @@ jobs:
               git fetch origin && \
               git reset --hard origin/bastion-test && \
               docker-compose down --rmi all -v --remove-orphans && \
-              docker-compose up -d --build \
+              docker-compose up --env-file .env.dev -d --build \
             ' \
           "
