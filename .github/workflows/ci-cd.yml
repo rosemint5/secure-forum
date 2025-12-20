@@ -22,4 +22,5 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no \
           ${{ secrets.BASTION_USER }}@$13.53.125.163 << 'EOF'
+            echo 'test'
           EOF
