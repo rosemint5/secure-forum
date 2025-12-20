@@ -22,15 +22,4 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no \
           ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} << 'EOF'
-
-            ssh -i 'secure-forum-key.pem' \
-            -o StrictHostKeyChecking=no \
-            ${{ secrets.BACKEND_USER }}@${{ secrets.BACKEND_HOST }} << 'INNER_EOF'
-
-              cd /home/ubuntu/secure-forum
-              git fetch origin
-              git reset --hard origin/bastion-test
-              docker-compose up -d --build
-
-            INNER_EOF
           EOF
