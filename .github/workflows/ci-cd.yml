@@ -66,7 +66,7 @@ jobs:
 
   dast:
     name: DAST - OWASP ZAP
-    needs: deploy
+    #needs: deploy
     runs-on: ubuntu-latest
 
     steps:
