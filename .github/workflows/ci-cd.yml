@@ -2,10 +2,7 @@ name: SAST/DAST/Deploy
 
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch do zeskanowania'
-        default: 'security-l7' 
+
 
 permissions:
   actions: read
