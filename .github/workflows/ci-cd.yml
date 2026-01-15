@@ -1,31 +1,64 @@
-name: Deploy repo przy updacie
+name: SAST/DAST/Deploy
 
 on:
   push:
     branches:
       - bastion-test
+  pull_request:
+    branches:
+      - bastion-test
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
 
 jobs:
-  deploy:
+  sast-codeql:
+    name: SAST - CodeQL 
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+          queries: security-extended
+
+      # Dla Pythona NIE POTRZEBA autobuilda,
+      # ale CodeQL go toleruje – bezpiecznie zostawić
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+
+  deploy:
+    name: Deploy przez bastion
+    needs: sast-codeql
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Klucz do bastionu ssh
         uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.BASTION_KEY }}
 
-#      - name: Deploy przez bastion na backend
-#        run: |
-#          ssh -o StrictHostKeyChecking=no ec2-user@13.62.52.95 "\
-#            ssh -o StrictHostKeyChecking=no -i 'secure-forum-key.pem' ${{ secrets.BACKEND_USER }}@${{ secrets.BACKEND_HOST }} '\
-#              cd /home/ubuntu/secure-forum && \
-#              git fetch origin && \
-#              git reset --hard origin/bastion-test && \
-#              docker-compose down --rmi all -v --remove-orphans && \
-#              docker-compose --env-file .env.dev up -d --build \
-#            ' \
-#          "
+      # - name: Deploy przez bastion na backend
+      #   run: |
+      #     ssh -o StrictHostKeyChecking=no ec2-user@13.62.52.95 "\
+      #       ssh -o StrictHostKeyChecking=no \
+      #       ${{ secrets.BACKEND_USER }}@${{ secrets.BACKEND_HOST }} '\
+      #         cd /home/ubuntu/secure-forum && \
+      #         git fetch origin && \
+      #         git reset --hard origin/bastion-test && \
+      #         docker-compose down --rmi all -v --remove-orphans && \
+      #         docker-compose --env-file .env.dev up -d --build \
+      #       ' \
+      #     "
