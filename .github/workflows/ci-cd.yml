@@ -7,6 +7,11 @@ on:
   pull_request:
     branches:
       - "**"
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch do zeskanowania'
+        default: 'security-l7' 
 
 permissions:
   actions: read
@@ -21,6 +26,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref }}
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
