@@ -1,14 +1,20 @@
-<h2>Forum</h2>
-<p>Welcome, {{ request.user.username }} | <a href="{% url 'logout' %}">Logout</a></p>
-<form method="post">
-  {% csrf_token %}
-  <textarea name="content" rows="3" cols="40"></textarea><br>
-  <button type="submit">Post</button>
-</form>
+<h1>Welcome to SecureForum!</h1>
 
-<hr>
-{% for post in posts %}
-  <p><strong>{{ post.author.username }}</strong>: {{ post.content }} <small>({{ post.created_at }})</small></p>
-{% empty %}
-  <p>No posts yet.</p>
-{% endfor %}
+{% if user.is_authenticated %}
+<p>Hello, {{ user.username }}!</p>
+<a href="{% url 'create_post' %}">Create a new post</a>
+<form action="{% url 'logout' %}" method="post" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit">Log out</button>
+</form>
+{% else %}
+<p>You are not logged in. <a href="{% url 'login' %}">Login</a> to participate.</p>
+{% endif %}
+
+<h2>Posts:</h2>
+<ul>
+    {% for post in posts %}
+    <li><strong>{{ post.title }}</strong>: {{ post.content }}</li>
+    {% endfor %}
+</ul>
+

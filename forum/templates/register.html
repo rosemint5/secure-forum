@@ -10,8 +10,13 @@
 
 <form method="post">
   {% csrf_token %}
+
   <input type="text" name="username" placeholder="Username" value="{{ username|default:'' }}"><br>
-  <input type="password" name="password" placeholder="Password"><br>
+  <input type="email" name="email" placeholder="Email" value="{{ email|default:'' }}"><br>
+
+  <input type="password" name="password1" placeholder="Password"><br>
+  <input type="password" name="password2" placeholder="Confirm password"><br>
+
   <button type="submit">Register</button>
 </form>
 

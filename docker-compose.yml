@@ -2,25 +2,25 @@ volumes:
   postgres_data:
 
 services:
-  db:
-    image: postgres:15
-    container_name: secureforum-db
-    restart: unless-stopped
-    env_file:
-      - .env.dev
-    environment:
-      POSTGRES_DB: ${DATABASE_NAME}
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h 127.0.0.1 || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
+  #db:
+    #image: postgres:15
+    #container_name: secureforum-db
+    #restart: unless-stopped
+    #env_file:
+    #  - .env.dev
+    #environment:
+      #POSTGRES_DB: ${DATABASE_NAME}
+      #POSTGRES_USER: ${DATABASE_USER}
+      #POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    #volumes:
+      #- postgres_data:/var/lib/postgresql/data
+    #ports:
+     # - "5432:5432"
+    #healthcheck:
+      #test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h 127.0.0.1 || exit 1"]
+      #interval: 5s
+      #timeout: 5s
+      #retries: 12
 
   web:
     build: .
@@ -37,7 +37,7 @@ services:
     volumes:
       - .:/app
     ports:
-      - "8000:8000"
-    depends_on:
-      db:
-        condition: service_healthy
+      - "80:8000"
+    #depends_on:
+      #db:
+        #condition: service_healthy
