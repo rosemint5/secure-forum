@@ -3,10 +3,10 @@ name: SAST/DAST/Deploy
 on:
   push:
     branches:
-      - bastion-test
+      - "**"
   pull_request:
     branches:
-      - bastion-test
+      - "**"
 
 permissions:
   actions: read
@@ -39,6 +39,7 @@ jobs:
   deploy:
     name: Deploy przez bastion
     needs: sast-codeql
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
