@@ -64,3 +64,19 @@ jobs:
       #         docker-compose --env-file .env.dev up -d --build \
       #       ' \
       #     "
+
+  dast:
+    name: DAST - OWASP ZAP
+    needs: deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run OWASP ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.7.0
+        with:
+          target: 'https://secure-forums-lab.uk'
+          fail_on_risk: 'medium'                       # zakończy job przy medium
+          cmd_options: '-t'
