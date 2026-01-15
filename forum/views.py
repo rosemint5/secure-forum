@@ -6,9 +6,11 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-
 from .models import Post
 import logging
+from .forms import PostForm
+from .forms import PostForm
+from django.core.mail import send_mail
 
 security_logger = logging.getLogger("security")
 
@@ -16,33 +18,64 @@ security_logger = logging.getLogger("security")
 def register_view(request):
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
-        password = request.POST.get("password", "")
+        email = request.POST.get("email", "").strip().lower()
+        password1 = request.POST.get("password1", "")
+        password2 = request.POST.get("password2", "")
 
+        # Basic validation
         if len(username) < 3 or len(username) > 30:
             messages.error(request, "Username must be 3–30 characters long.")
-            return render(request, "register.html", {"username": username})
+            return render(request, "register.html", {"username": username, "email": email})
 
+        if not username or not email or not password1 or not password2:
+            messages.error(request, "Please provide username, email, and both password fields.")
+            return render(request, "register.html", {"username": username, "email": email})
 
-        if not username or not password:
-            messages.error(request, "Please provide both username and password.")
-            return render(request, "register.html", {"username": username})
+        if password1 != password2:
+            messages.error(request, "Passwords do not match.")
+            return render(request, "register.html", {"username": username, "email": email})
 
+        # Uniqueness checks
         if User.objects.filter(username=username).exists():
-            messages.error(request, "Invalid credentials.")
-            return render(request, "register.html", {"username": username})
+            messages.error(request, "This username already exists.")
+            return render(request, "register.html", {"username": username, "email": email})
 
+        if User.objects.filter(email__iexact=email).exists():
+            messages.error(request, "An account with this email already exists.")
+            return render(request, "register.html", {"username": username, "email": email})
+
+
+        # Password policy (Django + your custom validator)
         try:
-            validate_password(password)
+            validate_password(password1)
         except ValidationError as e:
             for err in e.messages:
                 messages.error(request, err)
-            return render(request, "register.html", {"username": username})
+            return render(request, "register.html", {"username": username, "email": email})
 
-        User.objects.create_user(username=username, password=password)
+        # Create user (login stays by username; email is required for registration)
+        User.objects.create_user(username=username, email=email, password=password1)
+
+
+        send_mail(
+            subject="Welcome to Secure Forum",
+            message=(
+                f"Hello {username},\n\n"
+                "Your account has been successfully created on Secure Forum.\n"
+                "You can now log in.\n\n"
+                "Regards,\n"
+                "Secure Forum Team"
+            ),
+            from_email=None,  # uses DEFAULT_FROM_EMAIL from settings
+            recipient_list=[email],
+            fail_silently=False,
+        )
+
 
         security_logger.info(
-            "USER_REGISTER username=%s ip=%s ua=%s",
+            "USER_REGISTER username=%s email=%s ip=%s ua=%s",
             username,
+            email,
             get_client_ip(request),
             request.META.get("HTTP_USER_AGENT", "-"),
         )
@@ -125,3 +158,19 @@ def get_client_ip(request):
     if x_forwarded_for:
         return x_forwarded_for.split(",")[0].strip()
     return request.META.get("REMOTE_ADDR")
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def create_post(request):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    form = PostForm(request.POST or None)
+    if form.is_valid():
+        post = form.save(commit=False)
+        post.author = request.user
+        post.save()
+        return redirect("home")
+
+    return render(request, "create_post.html", {"form": form})
+
