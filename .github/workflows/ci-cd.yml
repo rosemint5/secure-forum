@@ -1,7 +1,9 @@
 name: SAST/DAST/Deploy
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - bastion-test
 
 
 permissions:
