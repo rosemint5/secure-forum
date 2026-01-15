@@ -8,9 +8,11 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import Post
 import logging
-from .forms import PostForm
-from .forms import PostForm
 from django.core.mail import send_mail
+from .utils import sanitize_for_log, get_client_ip
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
+
 
 security_logger = logging.getLogger("security")
 
@@ -74,10 +76,10 @@ def register_view(request):
 
         security_logger.info(
             "USER_REGISTER username=%s email=%s ip=%s ua=%s",
-            username,
-            email,
+            sanitize_for_log(username),
+            sanitize_for_log(email),
             get_client_ip(request),
-            request.META.get("HTTP_USER_AGENT", "-"),
+            sanitize_for_log(request.META.get("HTTP_USER_AGENT"), 200),
         )
 
         messages.success(request, "Account created successfully. You can now log in.")
@@ -99,18 +101,18 @@ def login_view(request):
 
             security_logger.info(
                 "LOGIN_SUCCESS username=%s ip=%s ua=%s",
-                username,
+                sanitize_for_log(username),
                 get_client_ip(request),
-                request.META.get("HTTP_USER_AGENT", "-"),
+                sanitize_for_log(request.META.get("HTTP_USER_AGENT"), 200),
             )
 
             return redirect("home")
 
         security_logger.warning(
             "LOGIN_FAIL username=%s ip=%s ua=%s",
-            username,
+            sanitize_for_log(username),
             get_client_ip(request),
-            request.META.get("HTTP_USER_AGENT", "-"),
+            sanitize_for_log(request.META.get("HTTP_USER_AGENT"), 200),
         )
 
         messages.error(request, "Invalid username or password.")
@@ -122,9 +124,9 @@ def login_view(request):
 def logout_view(request):
     security_logger.info(
         "LOGOUT username=%s ip=%s ua=%s",
-        getattr(request.user, "username", "-"),
+        sanitize_for_log(getattr(request.user, "username", "-")),
         get_client_ip(request),
-        request.META.get("HTTP_USER_AGENT", "-"),
+        sanitize_for_log(request.META.get("HTTP_USER_AGENT"), 200),
     )
 
     logout(request)
@@ -132,45 +134,34 @@ def logout_view(request):
 
 
 @login_required
-@require_http_methods(["GET", "POST"])
+@require_http_methods(["GET"])
 def home_view(request):
-    if request.method == "POST":
-        content = request.POST.get("content", "").strip()
-        if content:
-            Post.objects.create(author=request.user, content=content)
-
-            security_logger.info(
-                "POST_CREATE username=%s ip=%s",
-                request.user.username,
-                get_client_ip(request),
-            )
-
-            messages.success(request, "Post added successfully.")
-        else:
-            messages.error(request, "Post content cannot be empty.")
-
     posts = Post.objects.all().order_by("-created_at")
     return render(request, "home.html", {"posts": posts})
 
-
-def get_client_ip(request):
-    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-    if x_forwarded_for:
-        return x_forwarded_for.split(",")[0].strip()
-    return request.META.get("REMOTE_ADDR")
-
 @login_required
-@require_http_methods(["GET", "POST"])
+@require_http_methods(["POST"])
 def create_post(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
-
-    form = PostForm(request.POST or None)
-    if form.is_valid():
-        post = form.save(commit=False)
-        post.author = request.user
-        post.save()
+    form = PostForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Invalid post data.")
         return redirect("home")
 
-    return render(request, "create_post.html", {"form": form})
+    post = form.save(commit=False)
+    post.author = request.user
+    post.save()
 
+    security_logger.info(
+        "POST_CREATE user_id=%s username=%s ip=%s post_id=%s",
+        request.user.id,
+        sanitize_for_log(request.user.username),
+        get_client_ip(request),
+        post.id,
+    )
+
+    messages.success(request, "Post added successfully.")
+    return redirect("home")
+
+@csrf_exempt
+def health(request):
+    return HttpResponse("OK", status=200)
