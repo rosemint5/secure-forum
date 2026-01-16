@@ -19,8 +19,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.branch || github.ref }}
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -39,7 +37,6 @@ jobs:
   deploy:
     name: Deploy przez bastion
     needs: sast-codeql
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
@@ -50,12 +47,26 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.BASTION_KEY }}
+          
 
-      # - name: Deploy przez bastion na backend
-      #   run: |
-      #     ssh -o StrictHostKeyChecking=no ec2-user@13.62.52.95 "\
-      #       ssh -o StrictHostKeyChecking=no \
-      #       ${{ secrets.BACKEND_USER }}@${{ secrets.BACKEND_HOST }} '\
+      - name: Run OWASP ZAP on backend
+        run: |
+          ssh -o StrictHostKeyChecking=no ec2-user@13.60.134.106 "\
+            ssh -o StrictHostKeyChecking=no ${{ secrets.BACKEND_USER }}@${{ secrets.BACKEND_HOST }} '\
+              docker run -v /home/ubuntu/secure-forum:/zap/wrk/:rw --network=host -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+                -t http://localhost:80 \
+                -r report.html \
+                -J report.json \
+                -w report_md.md \
+                -a -j -m 10 \
+            '"
+      
+      #- name: Deploy przez bastion na backend
+      #  run: |
+      #    ssh -o StrictHostKeyChecking=no ec2-user@13.60.134.106 "\
+      #      ssh -o StrictHostKeyChecking=no \
+      #      ${{ secrets.BACKEND_USER }}@${{ secrets.BACKEND_HOST }} "
+
       #         cd /home/ubuntu/secure-forum && \
       #         git fetch origin && \
       #         git reset --hard origin/bastion-test && \
@@ -63,19 +74,3 @@ jobs:
       #         docker-compose --env-file .env.dev up -d --build \
       #       ' \
       #     "
-
-  dast:
-    name: DAST - OWASP ZAP (HTTPS)
-    #needs: deploy
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Run OWASP ZAP baseline scan against HTTPS
-        uses: zaproxy/action-baseline@v0.11.0
-        with:
-          target: 'https://secure-forums-lab.uk'
-          fail_action: true
-          cmd_options: >
-            -a
-            -j
-            -m 10
