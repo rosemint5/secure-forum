@@ -12,7 +12,7 @@ from django.core.mail import send_mail
 from .utils import sanitize_for_log, get_client_ip
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
-
+from .forms import PostForm
 
 security_logger = logging.getLogger("security")
 
@@ -140,27 +140,29 @@ def home_view(request):
     return render(request, "home.html", {"posts": posts})
 
 @login_required
-@require_http_methods(["POST"])
+@require_http_methods(["GET", "POST"])
 def create_post(request):
-    form = PostForm(request.POST)
-    if not form.is_valid():
-        messages.error(request, "Invalid post data.")
-        return redirect("home")
+    if request.method == "POST":
+        form = PostForm(request.POST)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.author = request.user
+            post.save()
 
-    post = form.save(commit=False)
-    post.author = request.user
-    post.save()
+            security_logger.info(
+                "POST_CREATE user_id=%s username=%s ip=%s post_id=%s",
+                request.user.id,
+                sanitize_for_log(request.user.username),
+                get_client_ip(request),
+                post.id,
+            )
 
-    security_logger.info(
-        "POST_CREATE user_id=%s username=%s ip=%s post_id=%s",
-        request.user.id,
-        sanitize_for_log(request.user.username),
-        get_client_ip(request),
-        post.id,
-    )
+            messages.success(request, "Post added successfully.")
+            return redirect("home")
+    else:
+        form = PostForm()
 
-    messages.success(request, "Post added successfully.")
-    return redirect("home")
+    return render(request, "create_post.html", {"form": form})
 
 @csrf_exempt
 def health(request):
