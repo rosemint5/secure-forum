@@ -149,7 +149,7 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
 
     # Force HTTPS
-    SECURE_SSL_REDIRECT = True
+    SECURE_SSL_REDIRECT = False
 
     # HSTS
     SECURE_HSTS_SECONDS = 31536000  # 1 year
@@ -167,14 +167,22 @@ AXES_COOLOFF_TIME = 1                  # 1 hour
 AXES_LOCKOUT_PARAMETERS = ["ip_address"]
 AXES_RESET_ON_SUCCESS = True
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "security": {"format": "%(asctime)s [%(levelname)s] %(message)s"},
+        "security": {
+            "format": "%(asctime)s %(levelname)s %(message)s"
+        },
     },
     "handlers": {
+        "security_file": {
+            "class": "logging.FileHandler",
+            "filename": "/var/log/secureforum/security.log",
+            "formatter": "security",
+        },
         "security_console": {
             "class": "logging.StreamHandler",
             "formatter": "security",
@@ -182,7 +190,7 @@ LOGGING = {
     },
     "loggers": {
         "security": {
-            "handlers": ["security_console"],
+            "handlers": ["security_file", "security_console"],
             "level": "INFO",
             "propagate": False,
         },
