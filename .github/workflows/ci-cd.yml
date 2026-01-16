@@ -1,10 +1,7 @@
 name: SAST/DAST/Deploy
 
 on:
-  push:
-    branches:
-      - bastion-test
-
+  workflow_dispatch:
 
 permissions:
   actions: read
@@ -36,7 +33,7 @@ jobs:
 
   deploy:
     name: Deploy przez bastion
-    #needs: sast-codeql
+    needs: sast-codeql
     runs-on: ubuntu-latest
 
     steps:
@@ -48,6 +45,20 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.BASTION_KEY }}
           
+      #- name: Deploy przez bastion na backend
+      #  run: |
+      #    ssh -o StrictHostKeyChecking=no ec2-user@13.60.134.106 "\
+      #      ssh -i /home/ec2-user/secure-forum-key.pem -o StrictHostKeyChecking=no \
+      #      ${{ secrets.BACKEND_USER }}@${{ secrets.BACKEND_HOST }} "
+
+      #         cd /home/ubuntu/secure-forum && \
+      #         git fetch origin && \
+      #         git reset --hard origin/bastion-test && \
+      #         docker-compose down --rmi all -v --remove-orphans && \
+      #         docker-compose --env-file .env.dev up -d --build \
+      #       ' \
+      #     "
+
 
       - name: Run OWASP ZAP on backend
         run: |
@@ -60,17 +71,3 @@ jobs:
                 -w report_md.md \
                 -a -j -m 10 \
             '"
-      
-      #- name: Deploy przez bastion na backend
-      #  run: |
-      #    ssh -o StrictHostKeyChecking=no ec2-user@13.60.134.106 "\
-      #      ssh -o StrictHostKeyChecking=no \
-      #      ${{ secrets.BACKEND_USER }}@${{ secrets.BACKEND_HOST }} "
-
-      #         cd /home/ubuntu/secure-forum && \
-      #         git fetch origin && \
-      #         git reset --hard origin/bastion-test && \
-      #         docker-compose down --rmi all -v --remove-orphans && \
-      #         docker-compose --env-file .env.dev up -d --build \
-      #       ' \
-      #     "
