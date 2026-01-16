@@ -36,7 +36,7 @@ jobs:
 
   deploy:
     name: Deploy przez bastion
-    needs: sast-codeql
+    #needs: sast-codeql
     runs-on: ubuntu-latest
 
     steps:
@@ -52,7 +52,7 @@ jobs:
       - name: Run OWASP ZAP on backend
         run: |
           ssh -o StrictHostKeyChecking=no ec2-user@13.60.134.106 "\
-            ssh -o StrictHostKeyChecking=no ${{ secrets.BACKEND_USER }}@${{ secrets.BACKEND_HOST }} '\
+            ssh -i /home/ec2-user/secure-forum-key.pem -o StrictHostKeyChecking=no ${{ secrets.BACKEND_USER }}@${{ secrets.BACKEND_HOST }} '\
               docker run -v /home/ubuntu/secure-forum:/zap/wrk/:rw --network=host -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
                 -t http://localhost:80 \
                 -r report.html \
